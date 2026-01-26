@@ -1,5 +1,5 @@
-from typing import Annotated
-from fastapi import status, Depends, HTTPException, APIRouter
+from fastapi import status, HTTPException, APIRouter
+from sqlalchemy import or_
 from .. import models, schemas, deps
 
 router = APIRouter(
@@ -16,7 +16,7 @@ def create_post(
     db: deps.DBSession,
     current_user: deps.CurrentUser
 ):
-    new_post = models.Post(**post.model_dump())
+    new_post = models.Post(**post.model_dump(), user_id = current_user.id)
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -26,10 +26,18 @@ def create_post(
 @router.get("/", response_model=list[schemas.PostResponse])
 def get_posts(
     db: deps.DBSession,
-    current_user: deps.CurrentUser
+    current_user: deps.CurrentUser,
+    limit: int = 10,
+    offset: int = 0,
+    search: str = ""
 ):
-    posts = db.query(models.Post).all()
-    return posts
+    posts = db.query(models.Post).filter(
+        or_(
+            models.Post.user_id == current_user.id,
+            models.Post.published == True
+        ), models.Post.title.contains(search)
+    ).limit(limit=limit).offset(offset=offset)
+    return posts 
 
 @router.get("/{id}", response_model=schemas.PostResponse) # path parameter
 def get_post(
@@ -42,6 +50,10 @@ def get_post(
         raise HTTPException(
             status_code=404,
             detail=f"Post with id {id} not found!"
+        )
+    if not (post.published or post.user_id == current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"Not authorized to perform requested action"
         )
     return post
 
@@ -56,6 +68,10 @@ def update_post(
     if post is None:
         raise HTTPException(
             status_code=404, detail=f"Post with id {id} not found!"
+        )
+    if post.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"Not authorized to perform requested action"
         )
     post.title = payload.title
     post.content = payload.content
@@ -75,6 +91,10 @@ def delete_post(
     if deleted_post is None:
         raise HTTPException(
             status_code=404, detail=f"Post with id {id} not found!"
+        )
+    if deleted_post.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"Not authorized to perform requested action"
         )
     db.delete(deleted_post)
     db.commit()

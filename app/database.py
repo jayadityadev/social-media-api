@@ -1,9 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
-from os import getenv
+from . import config
 
-load_dotenv()
 
 # Instead of connecting via db driver like
 # conn = psycopg.connect(
@@ -12,11 +10,7 @@ load_dotenv()
 # create a database URL like
 # SQLALCHEMY_DATABASE_URL = 'postgresql://<username>:<password>@<ip-addr (or) hostname>/<dbname>'
 
-SQLALCHEMY_DATABASE_URL = getenv("SQLALCHEMY_DATABASE_URL")
-if not SQLALCHEMY_DATABASE_URL:
-    raise RuntimeError("SQLALCHEMY_DATABASE_URL not set")
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL) # Engine = connection manager.
+engine = create_engine(url=config.db_url) # Engine = connection manager.
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine) # This line creates a factory that can make Sessions.
 

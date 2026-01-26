@@ -1,6 +1,21 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
+# User management schema
+
+class UserBase(BaseModel):
+    email: EmailStr
+
+class UserCreate(UserBase):
+    password: str
+
+class UserResponse(UserBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
 # Post management schema
 
 class PostBase(BaseModel):
@@ -16,21 +31,8 @@ class PostResponse(PostBase):
     id: int
     published: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-# User management schema
-
-class UserBase(BaseModel):
-    email: EmailStr
-
-class UserCreate(UserBase):
-    password: str
-
-class UserResponse(UserBase):
-    id: int
-    created_at: datetime
+    user_id: int
+    owner: UserResponse
 
     class Config:
         from_attributes = True

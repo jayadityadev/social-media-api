@@ -2,7 +2,7 @@ from typing import Annotated
 import jwt
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from . import models, database, exceptions
+from . import models, database, exceptions, config
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
@@ -12,11 +12,9 @@ load_dotenv()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login')
 
 # openssl rand -hex 32
-SECRET_KEY = getenv("SECRET_KEY")
-if not SECRET_KEY:
-    raise RuntimeError("SECRET_KEY not set")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = config.settings.jwt_secret_key
+ALGORITHM = config.settings.jwt_algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = config.settings.jwt_expire_time
 
 # Token created
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
