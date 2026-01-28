@@ -1,3 +1,4 @@
+from typing import Literal
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
@@ -37,6 +38,13 @@ class PostResponse(PostBase):
     class Config:
         from_attributes = True
 
+class PostWithVotes(BaseModel):
+    Post: PostResponse
+    vote_count: int
+
+    class Config:
+        from_attributes = True
+
 # Login management schema
 
 class Token(BaseModel):
@@ -46,3 +54,9 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     sub: str | None = None
     exp: datetime | None = None
+
+# Voting management schema
+
+class Vote(BaseModel):
+    post_id: int
+    dir: Literal[0, 1]
