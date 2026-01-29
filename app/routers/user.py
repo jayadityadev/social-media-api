@@ -35,7 +35,9 @@ def get_users(
 
 @router.get("/{id}", response_model=schemas.UserResponse) # path parameter
 def get_user(
-    id: int, db: deps.DBSession, current_user: deps.CurrentUser
+    id: int,
+    db: deps.DBSession,
+    current_user: deps.CurrentUser
 ):
     user = db.query(models.User).filter(models.User.id == id).first()
     if user is None:
@@ -53,11 +55,7 @@ def update_user(
 ):
     if current_user.id != id:
         raise HTTPException(status_code=403, detail="Not authorized")
-    user = db.query(models.User).filter(models.User.id == id).first()
-    if user is None:
-        raise HTTPException(
-            status_code=404, detail=f"User with id {id} not found!"
-        )
+    user = db.query(models.User).filter(models.User.id == current_user.id).first()
     user.email = payload.email
     user.password = utils.get_password_hash(payload.password)
     db.commit()
@@ -69,11 +67,9 @@ def update_user(
 def delete_user(
     id: int, db: deps.DBSession, current_user: deps.CurrentUser
 ):
-    deleted_user = db.query(models.User).filter(models.User.id == id).first()
-    if deleted_user is None:
-        raise HTTPException(
-            status_code=404, detail=f"User with id {id} not found!"
-        )
+    if current_user.id != id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    deleted_user = db.query(models.User).filter(models.User.id == current_user.id).first()
     db.delete(deleted_user)
     db.commit()
     return deleted_user
