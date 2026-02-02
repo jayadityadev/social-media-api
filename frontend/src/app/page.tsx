@@ -83,7 +83,7 @@ export default function Home() {
   const [profileEmail, setProfileEmail] = useState("");
   const [profilePassword, setProfilePassword] = useState("");
 
-  const authHeaders = useMemo(() => {
+  const authHeaders = useMemo<HeadersInit>(() => {
     if (!token) return {};
     return { Authorization: `Bearer ${token}` };
   }, [token]);
